@@ -1,0 +1,6 @@
+- name: add worker node
+  shell: "{{ hostvars[groups['masters'][0]].join_worker_node_command }} >> {{ kubernetes.logs_nodes }}"
+  args:
+    chdir: /var/log
+    creates: "{{ kubernetes.logs_nodes }}"
+  become: true

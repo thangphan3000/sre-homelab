@@ -1,0 +1,4 @@
+- name: setup k8s cluster
+  hosts: [masters, workers]
+  roles:
+    - { role: kubernetes, tags: k8s }

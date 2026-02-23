@@ -1,0 +1,81 @@
+- name: check if kubernetes cluster is already initialized
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: k8s_cluster_initialized
+
+- name: init cluster
+  shell: |
+    kubeadm init \
+      --control-plane-endpoint={{ hostvars[groups['masters'][0]]['ansible_facts']['default_ipv4']['address'] }}:6443 \
+      --apiserver-advertise-address={{ hostvars[groups['masters'][0]]['ansible_facts']['default_ipv4']['address'] }} \
+      --upload-certs \
+      --pod-network-cidr={{ kubernetes.pod_network_cidr }} \
+      --v 5 \
+      >> {{  kubernetes.logs_cluster  }}
+  args:
+    chdir: /var/log
+  when: not k8s_cluster_initialized.stat.exists
+  become: true
+
+- name: create kube config directory
+  file:
+    path: "{{ kubernetes.config }}"
+    state: directory
+    mode: 0755
+
+- name: print join command
+  shell: kubeadm token create --print-join-command
+  register: kubernetes_join_command
+  become: true
+
+- name: set join command fact
+  set_fact:
+    join_worker_node_command: "{{ kubernetes_join_command['stdout'] | trim }}"
+
+- name: display join command
+  debug:
+    msg: "Join command is {{ join_worker_node_command }}"
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: "{{ kubernetes.kube_config_admin }}"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.kube/config"
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_id'] }}"
+    remote_src: true
+    mode: 0644
+  become: true
+
+- name: copy kubeconfig to ansible host
+  fetch:
+    src: "~/.kube/config"
+    dest: "{{ playbook_dir }}/config"
+    flat: yes
+
+- name: detect architecture
+  shell: uname -m
+  register: arch
+
+- name: set cilium architecture
+  set_fact:
+    cilium_arch: "{{ 'arm64' if arch.stdout == 'aarch64' else 'amd64' }}"
+
+- name: get cilium CLI version
+  shell: curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt
+  register: cilium_version
+
+- name: download cilium CLI
+  get_url:
+    url: "https://github.com/cilium/cilium-cli/releases/download/{{ cilium_version.stdout }}/cilium-linux-{{ cilium_arch }}.tar.gz"
+    dest: "/tmp/cilium-linux-{{ cilium_arch }}.tar.gz"
+    mode: 0644
+
+- name: extract cilium CLI
+  unarchive:
+    src: "/tmp/cilium-linux-{{ cilium_arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+  become: true
+
+- name: install cilium
+  shell: cilium install --version {{ cni.cilium.version }}

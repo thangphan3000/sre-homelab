@@ -1,0 +1,13 @@
+kubernetes:
+  version: 1.33
+  components_version: 1.33.1-1.1
+  pod_network_cidr: 10.0.0.0/8
+  logs_cluster: cluster-initialized.log
+  logs_nodes: node_joined.log
+  logs_pods_calico: pod_network_setup_calico.log
+  config: ~/.kube
+  kube_config_admin: /etc/kubernetes/admin.conf
+
+cni:
+  cilium:
+    version: 1.19.1

@@ -1,0 +1,17 @@
+- include_tasks: system-required.yaml
+
+- include_tasks: container-runtime.yaml
+
+- include_tasks: components.yaml
+
+- include_tasks:
+    file: init.yaml
+  when:
+    - inventory_hostname in groups['masters'][0]
+    - "'k8s-init' in ansible_run_tags"
+
+- include_tasks:
+    file: worker.yaml
+  when:
+    - inventory_hostname in groups['workers']
+    - "'k8s-join-worker' in ansible_run_tags"

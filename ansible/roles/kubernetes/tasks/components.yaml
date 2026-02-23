@@ -1,0 +1,41 @@
+- name: delete kubernetes APT repository
+  file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    state: absent
+  become: true
+
+- name: download kubernetes's official GPG key
+  shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ kubernetes.version }}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: true
+
+- name: add kubernetes APT repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes.version }}/deb/ /"
+    state: present
+    filename: kubernetes
+    update_cache: yes
+  become: true
+
+- name: install kubernetes components on master node
+  apt:
+    name:
+      - "kubelet={{ kubernetes.components_version }}"
+      - "kubeadm={{ kubernetes.components_version }}"
+      - "kubectl={{ kubernetes.components_version }}"
+    update_cache: yes
+  become: true
+  when: "'masters' in group_names"
+
+- name: install kubernetes components on worker node
+  apt:
+    name:
+      - "kubelet={{ kubernetes.components_version }}"
+      - "kubeadm={{ kubernetes.components_version }}"
+    update_cache: yes
+  become: true
+  when: "'workers' in group_names"
+
+- name: hold versions
+  shell: apt-mark hold kubelet kubeadm kubectl
+  become: true
