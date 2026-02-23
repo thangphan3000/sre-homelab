@@ -18,7 +18,7 @@ WORKER_IP=$(terragrunt output -json instance_public_ips | jq -r '.["production-k
 echo "→ Updating inventory file..."
 cat > "${PROJECT_ROOT}/ansible/inventory/hosts.ini" <<EOF
 master1                ansible_host=${MASTER_IP}  ansible_user=ubuntu
-worker1                ansible_host=${WORKER_IP}   ansible_user=ubuntu
+worker1                ansible_host=${WORKER_IP}  ansible_user=ubuntu
 
 [masters]
 master1
