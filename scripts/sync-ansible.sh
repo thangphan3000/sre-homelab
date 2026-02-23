@@ -8,7 +8,7 @@ echo "Syncing Terraform outputs to Ansible..."
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "→ Exporting SSH private key..."
-cd "${PROJECT_ROOT}/terragrunt/160927904381/ap-southeast-1/production/shared/ec2"
+cd "${PROJECT_ROOT}/terragrunt-aws/160927904381/ap-southeast-1/production/shared/ec2"
 terragrunt output -raw ssh_private_key > "${PROJECT_ROOT}/ansible/private-key.pem"
 chmod 600 "${PROJECT_ROOT}/ansible/private-key.pem"
 
