@@ -4,7 +4,6 @@ set -eof pipefail
 
 echo "Syncing Terraform outputs to Ansible..."
 
-# Get project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "→ Exporting SSH private key..."
