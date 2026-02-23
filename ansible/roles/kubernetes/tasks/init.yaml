@@ -77,5 +77,24 @@
     remote_src: yes
   become: true
 
+- name: check if cilium is installed
+  shell: kubectl get pods -n kube-system -l k8s-app=cilium
+  register: cilium_check
+
 - name: install cilium
   shell: cilium install --version {{ cni.cilium.version }}
+  when: cilium_check.rc != 0
+
+- name: install kubecolor
+  apt:
+    name:
+      - kubecolor
+    state: present
+  become: true
+
+- name: add kubectl aliases to bashrc
+  blockinfile:
+    path: "{{ ansible_facts['env']['HOME'] }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      alias k='kubecolor'
